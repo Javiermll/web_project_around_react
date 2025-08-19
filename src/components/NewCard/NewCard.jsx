@@ -1,16 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
 import "../Popup/Popup.css";
 import closeIcon from "../../assets/images/Close_Icon.png";
 
 export default function NewCard({ onClose, onAddCard }) {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const name = e.target["card-name"].value;
-    const link = e.target["card-link"].value;
+  const [name, setName] = useState("");
+  const [link, setLink] = useState("");
+  const [errors, setErrors] = useState({ name: "", link: "" });
+  const [isLoading, setIsLoading] = useState(false);
 
-    if (onAddCard) {
-      onAddCard({ name, link });
-    }
+  // Validación en cada cambio
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    setName(value);
+    setErrors((prev) => ({
+      ...prev,
+      name: !value.trim() ? "El título es obligatorio." : "",
+    }));
+  };
+
+  const handleLinkChange = (e) => {
+    const value = e.target.value;
+    setLink(value);
+    setErrors((prev) => ({
+      ...prev,
+      link: !value.trim()
+        ? "El enlace es obligatorio."
+        : !/^https?:\/\/.+\..+/.test(value)
+        ? "El enlace debe ser válido."
+        : "",
+    }));
+  };
+
+  const isFormValid =
+    name.trim() &&
+    link.trim() &&
+    !errors.name &&
+    !errors.link;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isFormValid) return;
+    setIsLoading(true);
+    await onAddCard({ name, link });
+    setIsLoading(false);
     onClose();
   };
 
@@ -22,7 +54,7 @@ export default function NewCard({ onClose, onAddCard }) {
       noValidate
       onSubmit={handleSubmit}
     >
-      <button className="popup__close-button" onClick={onClose}>
+      <button className="popup__close-button" type="button" onClick={onClose}>
         <img src={closeIcon} alt="Boton de cerrar formulario" />
       </button>
 
@@ -36,23 +68,36 @@ export default function NewCard({ onClose, onAddCard }) {
           placeholder="Title"
           required
           type="text"
+          value={name}
+          onChange={handleNameChange}
         />
-        <span className="popup__error" id="card-name-error"></span>
+        <span className="popup__error" id="card-name-error">
+          {errors.name}
+        </span>
       </label>
+
       <label className="popup__field">
         <input
           className="popup__input popup__input_type_url"
           id="card-link"
-          name="link"
+          name="card-link"
           placeholder="Image link"
           required
           type="url"
+          value={link}
+          onChange={handleLinkChange}
         />
-        <span className="popup__error" id="card-link-error"></span>
+        <span className="popup__error" id="card-link-error">
+          {errors.link}
+        </span>
       </label>
 
-      <button className="button popup__button" type="submit">
-        Guardar
+      <button
+        className="button popup__button"
+        type="submit"
+        disabled={!isFormValid || isLoading}
+      >
+        {isLoading ? "Guardando..." : "Guardar"}
       </button>
     </form>
   );

@@ -1,28 +1,35 @@
 // Card.jsx
 import React from "react";
 import "../Card/Card.css";
+import unionIcon from "../../assets/images/Union.png";
+import heartIcon from "../../assets/images/Vector2_corazon.svg";
 
 export default function Card({
   card,
-  onLike,
+  onCardLike,
   onDelete,
   onOpenImagePopup,
   trashIcon,
   heartIcon,
+  isLiked,
 }) {
-  const { name, link, isLiked, _id } = card;
+  const { name, link } = card;
 
   const handleLike = () => {
-    onLike(_id);
+    onCardLike(card);
   };
 
   const handleDelete = () => {
-    onDelete(_id);
+    onDelete(card);
   };
 
   const handleImageClick = () => {
     onOpenImagePopup(card);
   };
+
+  const cardLikeButtonClassName = `card__like-button ${
+    isLiked ? "card__like-button_is-active" : ""
+  }`;
 
   return (
     <li className="card">
@@ -48,13 +55,15 @@ export default function Card({
         <h2 className="card__title">{name}</h2>
         <button
           aria-label="Like card"
+          className={cardLikeButtonClassName}
           type="button"
-          className={`card__like-button ${
-            isLiked ? "card__like-button_liked" : ""
-          }`}
           onClick={handleLike}
         >
-          <img src={heartIcon} alt="Me gusta" className="card__like-icon" />
+          <img
+            src={isLiked ? unionIcon : heartIcon}
+            alt="Me gusta"
+            className="card__like-icon"
+          />
         </button>
       </div>
     </li>

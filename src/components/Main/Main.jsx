@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Popup from "../Popup/Popup";
 import NewCard from "../NewCard/NewCard";
 import EditProfile from "../EditProfile/EditProfile";
@@ -11,138 +11,80 @@ import editIcon from "../../assets/images/Vector1.png";
 import addIcon from "../../assets/images/Add_Button.png";
 import trashIcon from "../../assets/images/Trash.svg";
 import heartIcon from "../../assets/images/Vector2_corazon.svg";
+import CurrentUserContext from "../../contexts/CurrentUserContext";
+import api from "../../utils/apiInstance.js"; // o "../utils/apiInstance.js" según la ruta
 
 import "./Main.css";
 
-function Main() {
-  const [popup, setPopup] = useState(null);
-  const [cards, setCards] = useState([
-    {
-      isLiked: false,
-      _id: "5d1f0611d321eb4bdcd707dd",
-      name: "Yosemite Valley",
-      link: "https://practicum-content.s3.us-west-1.amazonaws.com/web-code/moved_yosemite.jpg",
-      owner: "5d1f0611d321eb4bdcd707dd",
-      createdAt: "2019-07-05T08:10:57.741Z",
-    },
-    {
-      isLiked: false,
-      _id: "5d1f064ed321eb4bdcd707de",
-      name: "Lake Louise",
-      link: "https://practicum-content.s3.us-west-1.amazonaws.com/web-code/moved_lake-louise.jpg",
-      owner: "5d1f0611d321eb4bdcd707dd",
-      createdAt: "2019-07-05T08:11:58.324Z",
-    },
-  ]);
+function Main({
+  cards,
+  onCardLike,
+  onCardDelete,
+  onAddCard,
+  onOpenPopup,
+  onClosePopup,
+  popup,
+}) {
+  const { currentUser, handleUpdateUser, handleUpdateAvatar } =
+    useContext(CurrentUserContext);
 
-  // Estado para almacenar los datos del perfil
-  const [profile, setProfile] = useState({
-    name: "Jacques Cousteau",
-    about: "Explorador",
-    avatar: avatar,
-  });
+  const [cardToDelete, setCardToDelete] = useState(null);
 
   const openEditProfilePopup = () => {
-    setPopup({
+    onOpenPopup({
       title: "Editar perfil",
-      children: (
-        <EditProfile
-          onClose={handleClosePopup}
-          onUpdateProfile={handleUpdateProfile}
-        />
-      ),
+      children: <EditProfile onClose={onClosePopup} />,
     });
   };
 
   const openAddCardPopup = () => {
-    setPopup({
+    onOpenPopup({
       title: "Nuevo lugar",
-      children: (
-        <NewCard onClose={handleClosePopup} onAddCard={handleAddCard} />
-      ),
+      children: <NewCard onClose={onClosePopup} onAddCard={onAddCard} />,
     });
   };
 
   const openImagePopup = (card) => {
-    setPopup({
+    onOpenPopup({
       title: "Imagen",
-      children: <ImagePopup card={card} onClose={handleClosePopup} />,
+      children: <ImagePopup card={card} onClose={onClosePopup} />,
     });
   };
 
   const openDeleteCardPopup = (card) => {
-    setPopup({
-      title: "¿Estás seguro/a?",
-      children: (
-        <RemoveCard
-          onClose={handleClosePopup}
-          onConfirm={() => handleDelete(card._id)}
-        />
-      ),
-    });
+    console.log("Card to delete:", card);
+    setCardToDelete(card);
+  };
+
+  useEffect(() => {
+    if (cardToDelete) {
+      onOpenPopup({
+        title: "¿Estás seguro/a?",
+        children: (
+          <RemoveCard onClose={onClosePopup} onConfirm={handleDeleteConfirm} />
+        ),
+      });
+    }
+  }, [cardToDelete]);
+
+  const handleDeleteConfirm = () => {
+    if (cardToDelete && cardToDelete._id) {
+      onCardDelete(cardToDelete._id);
+      setCardToDelete(null);
+      onClosePopup();
+    }
   };
 
   const openAvatarPopup = () => {
-    setPopup({
+    onOpenPopup({
       title: "Cambiar foto de perfil",
       children: (
         <EditAvatar
-          onClose={handleClosePopup}
+          onClose={onClosePopup}
           onUpdateAvatar={handleUpdateAvatar}
         />
       ),
     });
-  };
-
-  //Funcion para manejar la actualizacion del avatar
-  const handleUpdateAvatar = (newAvatar) => {
-    setProfile((prevProfile) => ({
-      ...prevProfile,
-      avatar: newAvatar,
-    }));
-  };
-
-  // Funcion para manejar la adicion de una nueva tarjeta
-  const handleAddCard = (newCard) => {
-    setCards((prevCards) => [
-      ...prevCards,
-      {
-        isLiked: false,
-        _id: Date.now().toString(),
-        name: newCard.name,
-        link: newCard.link,
-        owner: "currentUserId",
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-  };
-
-  // Función para manejar la actualización del perfil
-  const handleUpdateProfile = (newProfile) => {
-    setProfile((prevProfile) => ({
-      ...prevProfile,
-      name: newProfile.name,
-      about: newProfile.about,
-    }));
-  };
-
-  // Función para cerrar el popup
-  const handleClosePopup = () => {
-    setPopup(null);
-  };
-
-  // Función para manejar el like
-  const handleLike = (id) => {
-    setCards((prevCards) =>
-      prevCards.map((card) =>
-        card._id === id ? { ...card, isLiked: !card.isLiked } : card
-      )
-    );
-  };
-
-  // Función para manejar la eliminación de una tarjeta
-  const handleDelete = (id) => {
-    setCards((prevCards) => prevCards.filter((card) => card._id !== id));
   };
 
   return (
@@ -150,8 +92,8 @@ function Main() {
       <section className="profile">
         <div className="profile__image-container">
           <img
-            src={profile.avatar}
-            alt="Jacques Cousteau"
+            src={currentUser.avatar ? currentUser.avatar : ""}
+            alt="Avatar"
             className="profile__avatar"
           />
           <div className="profile__avatar-overlay" onClick={openAvatarPopup}>
@@ -163,8 +105,8 @@ function Main() {
           </div>
         </div>
         <div className="profile__info">
-          <h1 className="profile__name">{profile.name}</h1>
-          <p className="profile__occupation">{profile.about}</p>
+          <h1 className="profile__name">{currentUser.name}</h1>
+          <p className="profile__occupation">{currentUser.about}</p>
           <button
             className="profile__edit-button"
             onClick={openEditProfilePopup}
@@ -190,11 +132,19 @@ function Main() {
             <Card
               key={card._id}
               card={card}
-              onLike={handleLike}
-              onDelete={() => openDeleteCardPopup(card)}
+              onCardLike={onCardLike}
+              onDelete={openDeleteCardPopup}
               onOpenImagePopup={openImagePopup}
               trashIcon={trashIcon}
               heartIcon={heartIcon}
+              isLiked={
+                typeof card.isLiked === "boolean"
+                  ? card.isLiked
+                  : Array.isArray(card.likes) &&
+                    currentUser &&
+                    currentUser._id &&
+                    card.likes.some((like) => like === currentUser._id)
+              }
             />
           ))}
         </ul>
@@ -203,7 +153,7 @@ function Main() {
       {/* Renderización condicional del popup */}
       {popup && (
         <Popup
-          onClose={handleClosePopup}
+          onClose={onClosePopup}
           title={popup.title}
           className="popup_opened"
         >
