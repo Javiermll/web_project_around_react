@@ -1,5 +1,7 @@
 # Around The U.S. — Migración a React
 
+> 📌 Este repositorio documenta una etapa del proyecto "Around The U.S." durante el bootcamp TripleTen. La versión final, con backend propio y desplegada en producción, vive en [web_project_api_full](https://github.com/Javiermll/web_project_api_full).
+
 Versión de la red social de fotos "Around" migrada a React con Vite, como proyecto de formación en el bootcamp TripleTen.
 
 ## Descripcion / Objetivo
